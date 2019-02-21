@@ -1,17 +1,26 @@
 package com.mecewe.mqtttest;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import java.io.IOException;
 
@@ -22,22 +31,32 @@ import okhttp3.Response;
 
 import java.lang.ref.WeakReference;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
+    private SharedPreferences rememberpref;
+    private SharedPreferences.Editor remembereditor;
     private TextView log_1;
     private Button button1;
     private Button button2;
-    private String[] key = new String[20];
-    private int Numbers = 8;
+    private ImageButton setting;
+    private String[] key;
+    private int Numbers = 18;
     private int count = 0;
-    private int lower;
-    private int heigher;
-    private String Acess_token = "ywjc001";
+    private int lower1;
+    private int heigher1;
+    private int lower2;
+    private int heigher2;
+    private String Acess_token = "ywjc000";
     private String address;
     private String value;
     private boolean flag=false;
+
+    private String token,test2,test3;
+    private boolean[] key_1;
+    private boolean[] key_2;
 
     public static final MediaType JSON=MediaType.parse("application/json; charset=utf-8");
     private final MyHandler mHandler = new MyHandler(this);
@@ -46,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
         private final WeakReference<MainActivity> mActivity;
 
+        //子线程传递回主线程
         public MyHandler(MainActivity activity) {
             mActivity = new WeakReference<>(activity);
         }
@@ -68,34 +88,60 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-
+//    @Override
+//    public boolean onCreateOptionsMenu(Menu menu){
+//        MenuInflater inflater = getMenuInflater();
+//        inflater.inflate(R.layout.activity_main, menu);
+//        return true;
+//    }
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final EditText lower_text = (EditText)findViewById(R.id.text_1);
-        final EditText heigher_text = (EditText)findViewById(R.id.text_2);
+        final EditText lower_text1 = (EditText)findViewById(R.id.text_1);
+        final EditText heigher_text1 = (EditText)findViewById(R.id.text_2);
+        final EditText lower_text2 = (EditText)findViewById(R.id.text_3);
+        final EditText heigher_text2 = (EditText)findViewById(R.id.text_4);
+        rememberpref = PreferenceManager.getDefaultSharedPreferences(this);
         log_1 = (TextView)findViewById(R.id.log_1);
         log_1.setMovementMethod(ScrollingMovementMethod.getInstance());
         button1 =(Button)findViewById(R.id.button_1);
+        setting =(ImageButton)findViewById(R.id.ic_setting);
         iniData();
+        //发送按钮
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try{
-                    lower = Integer.parseInt(lower_text.getText().toString());
-                    heigher = Integer.parseInt(heigher_text.getText().toString());
+                    lower1 = Integer.parseInt(lower_text1.getText().toString());
+                    heigher1 = Integer.parseInt(heigher_text1.getText().toString());
+                    lower2 = Integer.parseInt(lower_text2.getText().toString());
+                    heigher2 = Integer.parseInt(heigher_text2.getText().toString());
                 }catch(Exception e){
                     return;
                 }
-                log_1.setText("Start to send ["+String.valueOf(lower)+","+ String.valueOf(heigher)+ ") numbers!\n");
+                log_1.setText("Start to send ["+String.valueOf(lower1)+","+ String.valueOf(heigher1)+ ") and" +
+                        " ["+String.valueOf(lower2)+","+ String.valueOf(heigher2)+ ") numbers!\n");
+//                log_1.append(Arrays.toString(key_1)+"\n");
+//                log_1.append(Arrays.toString(key_2)+"\n");
+//                log_1.append(rememberpref.getString("key_1", "[]"));
+
                 flag = false;
                 sendHttp();
             }
         });
+
+        setting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this,SettingActivity.class);
+                startActivity(intent);
+            }
+        });
         button2 =(Button)findViewById(R.id.button_2);
+        //停止发送按钮
         button2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -104,21 +150,68 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    //初始化数据
     private void iniData(){
 
-//        for (int i = 0;i<Numbers;i++){
-//            key[i]="H09"+
-//        }
-        key[0] = "H0900";
-        key[1] = "H0904";
-        key[2] = "H0908";
-        key[3] = "H090C";
-        key[4] = "H0910";
-        key[5] = "H0914";
-        key[6] = "H0918";
-        key[7] = "H091C";
+        key = new String[]{"H0900","H0904","H0908","H090C","H0910","H0914","H0918","H091C","H0920","H0924",
+                "H0928","H092C","H0930","H0934","H0938","H093C","H0940","H0944"};
 
+        if (getIntent().getStringExtra("token") != null){
+            Acess_token = getIntent().getStringExtra("token");
+        }else{
+            Acess_token = rememberpref.getString("access_token", "");
+        }
         address = "http://140.143.23.199:8080/api/v1/"+Acess_token+"/telemetry";
+
+        Bundle b1=this.getIntent().getExtras(); //打开为空时Bundle[{profile=0}]
+        Bundle b2=this.getIntent().getExtras();
+//        if (b1 != null) {
+//            key_1= b1.getBooleanArray("key_1");
+//            Log.e("b1", b1.toString());
+//            log_1.setText(b1.toString()+"1111\n");
+//            log_1.setText(Arrays.toString(key_1)+"1111\n");
+//        }else{
+            try {
+                JSONArray jsonArray1 = new JSONArray(rememberpref.getString("key_1", "[]"));
+                Log.e("jsonArray1", jsonArray1.toString());
+//                Arrays.fill(key_1, false);
+                if (jsonArray1.length() > 0){
+                    key_1=new boolean[Numbers];
+                    Arrays.fill(key_1, false);
+                    for (int i = 0; i < Numbers; i++) {
+                        key_1[i] = jsonArray1.getBoolean(i);
+                    }
+                    Log.e("key1___", Arrays.toString(key_1));
+                }
+//                log_1.setText(Arrays.toString(key_1)+"\n");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+//        }
+//        if (b2 != null){
+//            key_2= b2.getBooleanArray("key_2");
+//            Log.e("key2", Arrays.toString(key_2));
+//        }else{
+            try {
+                JSONArray jsonArray2 = new JSONArray(rememberpref.getString("key_2", "[]"));
+                Log.e("jsonArray2", jsonArray2.toString());
+//                Arrays.fill(key_2, false);
+                if (jsonArray2.length() > 0){
+                    key_2=new boolean[Numbers];
+                    Arrays.fill(key_2, false);
+                    for (int i = 0; i < Numbers; i++) {
+                        key_2[i] = jsonArray2.getBoolean(i);
+                    }
+                    Log.e("key2___", Arrays.toString(key_2));
+                }
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+//        }
+//        if (getIntent().getStringExtra("token") != null){
+//            Log.e("Access_token***",getIntent().getStringExtra("token"));
+//        }
+
     }
 
     private void sendHttp(){
@@ -127,40 +220,64 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     while (!flag) {
-                        Random r = new Random();
-                        double d = r.nextDouble() * (heigher-lower)+lower;
+                        if (key_1[count]){
+                            Random r = new Random();
+                            double d = r.nextDouble() * (heigher1-lower1)+lower1;
 //                        java.text.DecimalFormat   df   =new   java.text.DecimalFormat("#.00");
 //                        df.format(r.nextDouble() * 5);
-                        DecimalFormat df1 = new DecimalFormat("0.00");
-                        final String total =df1.format(d);
-                        HttpUtil.sendOkHttpPost(address, key[count], total, new Callback() {
-                            @Override
-                            public void onFailure(Call call, IOException e) {
-                            }
+                            DecimalFormat df1 = new DecimalFormat("0.00");
+                            final String total1 =df1.format(d);
+                            HttpUtil.sendOkHttpPost(address, key[count], total1, new Callback() {
+                                @Override
+                                public void onFailure(Call call, IOException e) {
+                                }
 
-                            @Override
-                            public void onResponse(Call call, Response response) throws IOException {
-                                Log.e("Sending*******", key[count]+":"+total);
-                                Message msg = new Message();
-                                msg.what = 0;
-                                msg.obj = "Sending******* "+key[count]+" : "+total+"\n";
-                                mHandler.sendMessage(msg);
-                            }
-                        });
-//                        Message msg = new Message();
-//                        msg.what = 0;
-//                        msg.obj = "Sending******* "+key[count]+" : "+total+"\n";
-//                        mHandler.sendMessage(msg);
-//                        String msgq = "Sending*******"+key[count]+":"+total+"\n";
-//                        log_1.append("Sending*******"+key[count]+":"+total+"\n");
-
-                        count = (count + 1) % 8;
-                        try {
-                            Thread.sleep(5000);
-                        } catch (InterruptedException e) {
-                            return;
+                                @Override
+                                public void onResponse(Call call, Response response) throws IOException {
+                                    Log.e("Sending*******", key[count]+":"+total1);
+                                    Message msg = new Message();
+                                    msg.what = 0;
+                                    msg.obj = "Sending******* "+key[count]+" : "+total1+"\n";
+                                    mHandler.sendMessage(msg);
+                                }
+                            });
                         }
-                    }
+
+                        if (key_2[count]){
+                            Random r = new Random();
+                            double d = r.nextDouble() * (heigher2-lower2)+lower2;
+//                        java.text.DecimalFormat   df   =new   java.text.DecimalFormat("#.00");
+//                        df.format(r.nextDouble() * 5);
+                            DecimalFormat df1 = new DecimalFormat("0.00");
+                            final String total2 =df1.format(d);
+                            HttpUtil.sendOkHttpPost(address, key[count], total2, new Callback() {
+                                @Override
+                                public void onFailure(Call call, IOException e) {
+                                }
+
+                                @Override
+                                public void onResponse(Call call, Response response) throws IOException {
+                                    Log.e("Sending*******", key[count]+":"+total2);
+                                    Message msg = new Message();
+                                    msg.what = 0;
+                                    msg.obj = "Sending******* "+key[count]+" : "+total2+"\n";
+                                    mHandler.sendMessage(msg);
+                                }
+                            });
+                        }
+
+                        if(key_1[count] || key_2[count]){
+                            try {
+                                Thread.sleep(5000);
+                            } catch (InterruptedException e) {
+                                return;
+                            }
+                        }
+                        count = (count + 1) % 18;
+
+                        }
+
+
 
                 } catch (Exception e) {
                     e.printStackTrace();
