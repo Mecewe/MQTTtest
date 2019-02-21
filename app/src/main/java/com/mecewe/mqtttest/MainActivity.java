@@ -10,9 +10,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -42,6 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private Button button1;
     private Button button2;
     private ImageButton setting;
+    private EditText lower_text1;
+    private EditText heigher_text1;
+    private EditText lower_text2;
+    private EditText heigher_text2;
     private String[] key;
     private int Numbers = 18;
     private int count = 0;
@@ -53,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
     private String address;
     private String value;
     private boolean flag=false;
-
+    private boolean No2_isabled=false;
     private String token,test2,test3;
     private boolean[] key_1;
     private boolean[] key_2;
@@ -100,16 +104,24 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        final EditText lower_text1 = (EditText)findViewById(R.id.text_1);
-        final EditText heigher_text1 = (EditText)findViewById(R.id.text_2);
-        final EditText lower_text2 = (EditText)findViewById(R.id.text_3);
-        final EditText heigher_text2 = (EditText)findViewById(R.id.text_4);
+        //EditText默认不弹出软键盘
+        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN);
+
+        lower_text1 = (EditText)findViewById(R.id.text_1);
+        heigher_text1 = (EditText)findViewById(R.id.text_2);
+        lower_text2 = (EditText)findViewById(R.id.text_3);
+        heigher_text2 = (EditText)findViewById(R.id.text_4);
         rememberpref = PreferenceManager.getDefaultSharedPreferences(this);
         log_1 = (TextView)findViewById(R.id.log_1);
         log_1.setMovementMethod(ScrollingMovementMethod.getInstance());
         button1 =(Button)findViewById(R.id.button_1);
         setting =(ImageButton)findViewById(R.id.ic_setting);
+//        lower_text1.clearFocus();
+
         iniData();
+//        lower_text1.setCursorVisible(false);
+//        InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+//        imm.hideSoftInputFromWindow( lower_text1.getWindowToken(),0);
         //发送按钮
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -117,13 +129,30 @@ public class MainActivity extends AppCompatActivity {
                 try{
                     lower1 = Integer.parseInt(lower_text1.getText().toString());
                     heigher1 = Integer.parseInt(heigher_text1.getText().toString());
-                    lower2 = Integer.parseInt(lower_text2.getText().toString());
-                    heigher2 = Integer.parseInt(heigher_text2.getText().toString());
+                    if (lower_text2.getText().toString().trim().length() != 0 && heigher_text2.getText().toString().trim().length() != 0){
+                        lower2 = Integer.parseInt(lower_text2.getText().toString());
+                        heigher2 = Integer.parseInt(heigher_text2.getText().toString());
+                        No2_isabled = true;
+                    }
                 }catch(Exception e){
                     return;
                 }
-                log_1.setText("Start to send ["+String.valueOf(lower1)+","+ String.valueOf(heigher1)+ ") and" +
-                        " ["+String.valueOf(lower2)+","+ String.valueOf(heigher2)+ ") numbers!\n");
+                remembereditor=rememberpref.edit();
+                remembereditor.putString("lower_text1",lower_text1.getText().toString());
+                remembereditor.putString("heigher_text1",heigher_text1.getText().toString());
+                remembereditor.putString("lower_text2",lower_text2.getText().toString());
+                remembereditor.putString("heigher_text2",heigher_text2.getText().toString());
+                remembereditor.putBoolean("isNull",true);
+                remembereditor.apply();
+                if (lower_text2.getText().toString().trim().length() != 0 && heigher_text2.getText().toString().trim().length() != 0){
+                    log_1.setText("Start to send No.1 group["+String.valueOf(lower1)+","+ String.valueOf(heigher1)+ ") and No.2 group" +
+                            "["+String.valueOf(lower2)+","+ String.valueOf(heigher2)+ ")!\n");
+                }else{
+                    log_1.setText("Start to send No.1 group["+String.valueOf(lower1)+","+ String.valueOf(heigher1)+ ")!\n");
+                    Log.e("111111111111111","111");
+                    No2_isabled = false;
+                }
+
 //                log_1.append(Arrays.toString(key_1)+"\n");
 //                log_1.append(Arrays.toString(key_2)+"\n");
 //                log_1.append(rememberpref.getString("key_1", "[]"));
@@ -162,7 +191,13 @@ public class MainActivity extends AppCompatActivity {
             Acess_token = rememberpref.getString("access_token", "");
         }
         address = "http://140.143.23.199:8080/api/v1/"+Acess_token+"/telemetry";
-
+        boolean isNull=rememberpref.getBoolean("isNull",false);
+        if (isNull) {
+            lower_text1.setText(rememberpref.getString("lower_text1", ""));
+            heigher_text1.setText(rememberpref.getString("heigher_text1", ""));
+            lower_text2.setText(rememberpref.getString("lower_text2", ""));
+            heigher_text2.setText(rememberpref.getString("heigher_text2", ""));
+        }
         Bundle b1=this.getIntent().getExtras(); //打开为空时Bundle[{profile=0}]
         Bundle b2=this.getIntent().getExtras();
 //        if (b1 != null) {
@@ -220,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 try {
                     while (!flag) {
+                        Log.e("star sending","111");
                         if (key_1[count]){
                             Random r = new Random();
                             double d = r.nextDouble() * (heigher1-lower1)+lower1;
@@ -243,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                             });
                         }
 
-                        if (key_2[count]){
+                        if (key_2[count] && No2_isabled){
                             Random r = new Random();
                             double d = r.nextDouble() * (heigher2-lower2)+lower2;
 //                        java.text.DecimalFormat   df   =new   java.text.DecimalFormat("#.00");
@@ -266,7 +302,7 @@ public class MainActivity extends AppCompatActivity {
                             });
                         }
 
-                        if(key_1[count] || key_2[count]){
+                        if(key_1[count] || (key_2[count] && No2_isabled)){
                             try {
                                 Thread.sleep(5000);
                             } catch (InterruptedException e) {
