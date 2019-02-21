@@ -54,10 +54,12 @@ public class MainActivity extends AppCompatActivity {
     private int lower2;
     private int heigher2;
     private String Acess_token = "ywjc000";
+    private int time_interval = 5000;
     private String address;
     private String value;
     private boolean flag=false;
     private boolean No2_isabled=false;
+    private boolean isAlreadyStart =false;
     private String token,test2,test3;
     private boolean[] key_1;
     private boolean[] key_2;
@@ -158,7 +160,11 @@ public class MainActivity extends AppCompatActivity {
 //                log_1.append(rememberpref.getString("key_1", "[]"));
 
                 flag = false;
-                sendHttp();
+//                //只产生一个子线程
+//                if (!isAlreadyStart){
+                    sendHttp();
+//                    isAlreadyStart = true;
+//                }
             }
         });
 
@@ -197,7 +203,11 @@ public class MainActivity extends AppCompatActivity {
             heigher_text1.setText(rememberpref.getString("heigher_text1", ""));
             lower_text2.setText(rememberpref.getString("lower_text2", ""));
             heigher_text2.setText(rememberpref.getString("heigher_text2", ""));
+//            time_interval =1000*Integer.parseInt(rememberpref.getString("time_interval",""));
         }
+//        test2=rememberpref.getString("time_interval","5");
+        time_interval =1000*Integer.parseInt(rememberpref.getString("time_interval","5"));
+        Log.e("time",String.valueOf(time_interval));
         Bundle b1=this.getIntent().getExtras(); //打开为空时Bundle[{profile=0}]
         Bundle b2=this.getIntent().getExtras();
 //        if (b1 != null) {
@@ -304,17 +314,13 @@ public class MainActivity extends AppCompatActivity {
 
                         if(key_1[count] || (key_2[count] && No2_isabled)){
                             try {
-                                Thread.sleep(5000);
+                                Thread.sleep(time_interval);
                             } catch (InterruptedException e) {
                                 return;
                             }
                         }
                         count = (count + 1) % 18;
-
-                        }
-
-
-
+                    }
                 } catch (Exception e) {
                     e.printStackTrace();
                     Looper.prepare();

@@ -58,6 +58,8 @@
                 android:textSize="18dp"/>
 
             <EditText
+
+                android:layout_weight="1"
                 android:id="@+id/text_token"
                 android:layout_width="200dp"
                 android:enabled="false"
@@ -72,7 +74,40 @@
                 android:src="@drawable/outline_lock_black_24" />
 
         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="时间发送间隔:"
+                android:textSize="18dp"/>
+
+            <EditText
+                android:gravity="center"
+                android:layout_weight="1"
+                android:id="@+id/time_interval"
+                android:layout_width="200dp"
+                android:enabled="false"
+                android:text="5"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="S  "
+                android:textSize="18dp"/>
+
+            <ImageView
+                android:id="@+id/locked_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:src="@drawable/outline_lock_black_24" />
+
+        </LinearLayout>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

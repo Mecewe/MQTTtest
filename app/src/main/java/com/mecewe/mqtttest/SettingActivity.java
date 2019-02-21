@@ -23,6 +23,7 @@ public class SettingActivity extends AppCompatActivity implements CompoundButton
     private SharedPreferences.Editor remembereditor;
     private ImageButton arrow_back;
     private EditText access_token;
+    private EditText time_interval;
     private Integer num = 18;
     private CheckBox checkBox1_1,checkBox1_2,checkBox1_3,checkBox1_4,checkBox1_5,checkBox1_6;
     private CheckBox checkBox1_7,checkBox1_8,checkBox1_9,checkBox1_10,checkBox1_11,checkBox1_12;
@@ -35,6 +36,7 @@ public class SettingActivity extends AppCompatActivity implements CompoundButton
     private boolean key_1[] = new boolean[18];
     private boolean key_2[] = new boolean[18];
     private boolean isChanged = false;
+    private boolean isChanged_2 = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +63,10 @@ public class SettingActivity extends AppCompatActivity implements CompoundButton
             checkBoxes_2[i].setOnCheckedChangeListener(this);
         }
         access_token=(EditText)findViewById(R.id.text_token);
+        time_interval=(EditText)findViewById(R.id.time_interval);
         arrow_back =(ImageButton)findViewById(R.id.ic_back);
         final ImageView isLocked =(ImageView)findViewById(R.id.locked);
-
+        final ImageView isLocked_2 =(ImageView)findViewById(R.id.locked_2);
 //        Log.e("key1 name",String.valueOf(key_1));[Z@202a8fe2
 //        Log.e("key1 name",String.valueOf(key_2));[Z@14c24f73
 
@@ -98,6 +101,7 @@ public class SettingActivity extends AppCompatActivity implements CompoundButton
             }
 
             access_token.setText(rem_access_token);
+            time_interval.setText(rememberpref.getString("time_interval",""));
         }
         //返回到主活动界面
         arrow_back.setOnClickListener(new View.OnClickListener() {
@@ -153,6 +157,25 @@ public class SettingActivity extends AppCompatActivity implements CompoundButton
             }
         });
 
+        isLocked_2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(v == isLocked_2){
+                    if (isChanged_2){
+                        isLocked_2.setImageDrawable(getResources().getDrawable(R.drawable.outline_lock_black_24));
+                        time_interval.setEnabled(false);
+                    }else{
+                        isLocked_2.setImageDrawable(getResources().getDrawable(R.drawable.baseline_lock_open_black_24));
+                        time_interval.setEnabled(true);
+                    }
+                    isChanged_2 = !isChanged_2;
+                    remembereditor=rememberpref.edit();
+                    remembereditor.putBoolean("isNull",true);
+                    remembereditor.putString("time_interval",time_interval.getText().toString());
+                    remembereditor.apply();
+                }
+            }
+        });
 
     }
 
